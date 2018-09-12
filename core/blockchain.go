@@ -1239,6 +1239,10 @@ func (st *insertStats) report(chain []*types.Block, index int, cache common.Stor
 		}
 		log.Info("Imported new chain segment", context...)
 
+		// BlockSim: Catch the time the block is received
+		var _now = time.Now().UnixNano() / int64(time.Millisecond)
+		log.Info(fmt.Sprintf("Received block #%v SentAt %v", end.Number(), _now))
+
 		*st = insertStats{startTime: now, lastIndex: index + 1}
 	}
 }

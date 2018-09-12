@@ -514,6 +514,11 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 			transactions[i] = body.Transactions
 			uncles[i] = body.Uncles
 		}
+
+		// BlockSim catch times
+		var now = msg.ReceivedAt.UnixNano() / int64(time.Millisecond)
+		log.Info(fmt.Sprintf("BlockBodiesMsg %v ReceivedAt %v from %v", request, now, p.id))
+
 		// Filter out any explicitly requested bodies, deliver the rest to the downloader
 		filter := len(transactions) > 0 || len(uncles) > 0
 		if filter {
@@ -618,6 +623,10 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 		}
 		// Mark the hashes as present at the remote node
 		for _, block := range announces {
+			// BlockSim catch times
+			var now = msg.ReceivedAt.UnixNano() / int64(time.Millisecond)
+			log.Info(fmt.Sprintf("NewBlockHashesMsg #%v ReceivedAt %v from %v", block.Number, now, p.id))
+
 			p.MarkBlock(block.Hash)
 		}
 		// Schedule all the unknown hashes for retrieval
@@ -710,6 +719,11 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 			peer.AsyncSendNewBlock(block, td)
 		}
 		log.Trace("Propagated block", "hash", hash, "recipients", len(transfer), "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
+
+		// BlockSim: Catch the time the block is sent
+		var now = time.Now().UnixNano() / int64(time.Millisecond)
+		log.Info(fmt.Sprintf("BroadcastBlock SendNewBlock #%v SentAt %v", block.Number(), now))
+
 		return
 	}
 	// Otherwise if the block is indeed in out own chain, announce it
@@ -717,6 +731,11 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 		for _, peer := range peers {
 			peer.AsyncSendNewBlockHash(block)
 		}
+
+		// BlockSim: Catch the time the block is sent
+		var now = time.Now().UnixNano() / int64(time.Millisecond)
+		log.Info(fmt.Sprintf("BroadcastBlock SendNewBlockHashes #%v SentAt %v", block.Number(), now))
+
 		log.Trace("Announced block", "hash", hash, "recipients", len(peers), "duration", common.PrettyDuration(time.Since(block.ReceivedAt)))
 	}
 }
