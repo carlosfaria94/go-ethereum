@@ -687,6 +687,11 @@ func (pm *ProtocolManager) handleMsg(p *peer) error {
 			if tx == nil {
 				return errResp(ErrDecode, "transaction %d is nil", i)
 			}
+
+			// BlockSim: Catch the time the tx is received
+			var now = time.Now().UnixNano() / int64(time.Millisecond)
+			log.Info("Transaction received", "hash", tx.Hash(), "at", now)
+
 			p.MarkTransaction(tx.Hash())
 		}
 		pm.txpool.AddRemotes(txs)
@@ -704,7 +709,7 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 	peers := pm.peers.PeersWithoutBlock(hash)
 
 	// If propagation is requested, send to a subset of the peer
-	if propagate {
+	/*if propagate {
 		// Calculate the TD of the block (it's not imported yet, so block.Td is not valid)
 		var td *big.Int
 		if parent := pm.blockchain.GetBlock(block.ParentHash(), block.NumberU64()-1); parent != nil {
@@ -725,7 +730,7 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 		log.Info(fmt.Sprintf("BroadcastBlock SendNewBlock #%v SentAt %v", block.Number(), now))
 
 		return
-	}
+	}*/
 	// Otherwise if the block is indeed in out own chain, announce it
 	if pm.blockchain.HasBlock(hash, block.NumberU64()) {
 		for _, peer := range peers {
@@ -752,6 +757,9 @@ func (pm *ProtocolManager) BroadcastTxs(txs types.Transactions) {
 			txset[peer] = append(txset[peer], tx)
 		}
 		log.Trace("Broadcast transaction", "hash", tx.Hash(), "recipients", len(peers))
+		// BlockSim: Catch the time the tx is sent
+		var now = time.Now().UnixNano() / int64(time.Millisecond)
+		log.Info("Broadcast transaction", "hash", tx.Hash(), "at", now)
 	}
 	// FIXME include this again: peers = peers[:int(math.Sqrt(float64(len(peers))))]
 	for peer, txs := range txset {
